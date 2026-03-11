@@ -1,17 +1,19 @@
 <template>
   <view class="container">
+
     <!-- 搜索框 -->
     <view class="search-box" @click="searchOrder">
       <image class="search-icon" src="/static/icons/find.png" mode="aspectFit"></image>
       <text class="search-text">搜索订单号 / 商品名称</text>
     </view>
 
-    <!-- 顶部分类 Tab -->
+    <!-- 分类 -->
     <view class="filter-bar">
+
       <view
         class="filter-item"
         :class="{ active: activeTab === 'ALL' }"
-        @click="activeTab = 'ALL'"
+        @click="activeTab='ALL'"
       >
         全部
       </view>
@@ -19,7 +21,7 @@
       <view
         class="filter-item"
         :class="{ active: activeTab === 'WAIT' }"
-        @click="activeTab = 'WAIT'"
+        @click="activeTab='WAIT'"
       >
         待送达
       </view>
@@ -27,222 +29,303 @@
       <view
         class="filter-item"
         :class="{ active: activeTab === 'DONE' }"
-        @click="activeTab = 'DONE'"
+        @click="activeTab='DONE'"
       >
         已完成
       </view>
+
     </view>
+
 
     <!-- 订单列表 -->
     <view class="order-list">
+
       <view
         class="order-card"
-        v-for="(item, index) in filteredOrders"
-        :key="index"
+        v-for="item in filteredOrders"
+        :key="item.id"
         @click="goOrderDetail(item)"
       >
+
+        <!-- 订单头 -->
         <view class="order-top">
-          <text class="order-id">订单号：{{ item.orderNo }}</text>
-          <text class="order-status" :class="item.status">
-            {{ getStatusText(item.status) }}
+
+          <text class="order-id">
+            订单号：{{item.id}}
           </text>
+
+          <text class="order-status" :class="item.status">
+            {{getStatusText(item.status)}}
+          </text>
+
         </view>
 
-        <view class="order-body">
-          <image class="order-img" :src="item.img" mode="aspectFill"></image>
+
+        <!-- 商品 -->
+        <view
+          class="order-body"
+          v-for="g in item.goods"
+          :key="g.id"
+        >
+
+          <image
+            class="order-img"
+            :src="g.img"
+            mode="aspectFill"
+          />
 
           <view class="order-info">
-            <text class="order-name">{{ item.goodsName }}</text>
-            <text class="order-desc">{{ item.desc }}</text>
+
+            <text class="order-name">
+              {{g.name}}
+            </text>
+
+            <text class="order-desc">
+              无人机极速配送
+            </text>
 
             <view class="order-bottom">
-              <text class="order-price">￥{{ item.price }}</text>
-              <text class="order-time">{{ item.time }}</text>
+
+              <text class="order-price">
+                ￥{{g.price}}
+              </text>
+
+              <text class="order-time">
+                {{item.time}}
+              </text>
+
             </view>
+
           </view>
+
         </view>
 
+
+        <!-- 底部 -->
         <view class="order-footer">
-          <text class="order-address">配送地址：{{ item.address }}</text>
+
+          <text class="order-address">
+            配送地址：南京邮电大学
+          </text>
+
+
           <view class="footer-actions">
-            <text class="more-btn" @click.stop="showMore(item)">更多</text>
-        
+
+            <text
+              class="more-btn"
+              @click.stop="showMore(item)"
+            >
+              更多
+            </text>
+
+
             <view class="btn-group">
-              <!-- 待送达：只有一个按钮 -->
+
+              <!-- 待配送 -->
               <button
-                v-if="item.status === 'WAIT'"
+                v-if="item.status==='WAIT'"
                 class="btn warn"
                 @click.stop="checkDelivery(item)"
               >
                 查看配送
               </button>
-        
-              <!-- 已完成：两个按钮 -->
-              <template v-if="item.status === 'DONE'">
-                <button class="btn light" @click.stop="commentOrder(item)">评价</button>
-                <button class="btn light" @click.stop="buyAgain(item)">再来一单</button>
+
+
+              <!-- 已完成 -->
+              <template v-if="item.status==='DONE'">
+
+                <button
+                  class="btn light"
+                  @click.stop="commentOrder(item)"
+                >
+                  评价
+                </button>
+
+                <button
+                  class="btn light"
+                  @click.stop="buyAgain(item)"
+                >
+                  再来一单
+                </button>
+
               </template>
+
             </view>
+
           </view>
+
         </view>
-		
+
       </view>
+
     </view>
 
-    <!-- 客服悬浮按钮 -->
+
+    <!-- 客服 -->
     <view class="service-btn" @click="contactService">
-      <image class="service-icon" src="/static/icons/service.png" mode="aspectFit"></image>
+
+      <image
+        class="service-icon"
+        src="/static/icons/service.png"
+        mode="aspectFit"
+      />
+
     </view>
-	
+
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { onShow } from "@dcloudio/uni-app";
 
-const activeTab = ref("ALL");
+import { ref, computed } from "vue"
+import { onShow } from "@dcloudio/uni-app"
+import { orderStore } from "@/store/order.js"
 
-const orderList = ref([
-  {
-    orderNo: "202602101001",
-    goodsName: "汉堡套餐",
-    desc: "热销 · 无人机极速配送",
-    price: 19.9,
-    img: "/static/goods/burger.jpg",
-    status: "WAIT",
-    address: "南京邮电大学仙林校区",
-    time: "今天 13:21"
-  },
-  {
-    orderNo: "202602091223",
-    goodsName: "百令胶囊感冒药",
-    desc: "药品急送 · 极速安全",
-    price: 28.0,
-    img: "/static/goods/medicine.jpg",
-    status: "DONE",
-    address: "南京市栖霞区文苑路",
-    time: "昨天 19:40"
-  },
-  {
-    orderNo: "202602081010",
-    goodsName: "购物篮子",
-    desc: "家庭必备 · 无人机配送",
-    price: 9.9,
-    img: "/static/goods/daily.jpg",
-    status: "DONE",
-    address: "南京市鼓楼区中央路",
-    time: "2天前 15:06"
+
+const activeTab = ref("ALL")
+
+const orderList = orderStore.list
+
+
+const filteredOrders = computed(()=>{
+
+  if(activeTab.value==="ALL"){
+    return orderList
   }
-]);
 
-const filteredOrders = computed(() => {
-  if (activeTab.value === "ALL") return orderList.value;
-  return orderList.value.filter((item) => item.status === activeTab.value);
-});
+  return orderList.filter(
+    item=>item.status===activeTab.value
+  )
 
-const getStatusText = (status) => {
-  if (status === "WAIT") return "待送达";
-  if (status === "DONE") return "已完成";
-  return "未知";
-};
+})
 
 
-const showMore = (item) => {
-  uni.showActionSheet({
-    itemList: ["查看详情", "删除订单", "联系客服"],
-    success: (res) => {
-      if (res.tapIndex === 0) {
-        goOrderDetail(item);
-      } else if (res.tapIndex === 1) {
-        uni.showToast({
-          title: "删除功能后续接入",
-          icon: "none"
-        });
-      } else if (res.tapIndex === 2) {
-        contactService();
-      }
-    }
-  });
-};
+const getStatusText = (status)=>{
 
-const commentOrder = (item) => {
+  if(status==="WAIT"){
+    return "待送达"
+  }
+
+  if(status==="DONE"){
+    return "已完成"
+  }
+
+  return "未知"
+
+}
+
+
+const searchOrder=()=>{
   uni.showToast({
-    title: "评价功能后续接入",
-    icon: "none"
-  });
-
-  // 预留接口：
-  // POST /api/order/comment
-};
+    title:"搜索功能后续接入",
+    icon:"none"
+  })
+}
 
 
-const searchOrder = () => {
-  uni.showToast({
-    title: "搜索功能后续接入",
-    icon: "none"
-  });
+const goOrderDetail=(item)=>{
 
-  // 预留接口：
-  // GET /api/order/search?keyword=xxx
-};
-
-const goOrderDetail = (item) => {
   uni.navigateTo({
-    url: "/pages/order/detail?orderNo=" + item.orderNo
-  });
-};
+    url:"/pages/order/detail?id="+item.id
+  })
+
+}
 
 
-const checkDelivery = (item) => {
+const checkDelivery=(item)=>{
+
+  uni.navigateTo({
+    url:"/pages/order/detail?id="+item.id
+  })
+
+}
+
+
+const buyAgain=(item)=>{
+
   uni.showToast({
-    title: "查看配送中：" + item.orderNo,
-    icon: "none"
-  });
+    title:"再来一单功能后续接入",
+    icon:"none"
+  })
 
-  // 预留接口：
-  // GET /api/order/tracking?orderNo=xxx
-};
+}
 
-const buyAgain = (item) => {
-  uni.showModal({
-    title: "再来一单",
-    content: "是否重新下单：" + item.goodsName + " ?",
-    success: (res) => {
-      if (res.confirm) {
-        uni.showToast({
-          title: "已加入购物流程（模拟）",
-          icon: "none"
-        });
 
-        // 预留接口：
-        // POST /api/order/repeat
+const commentOrder=(item)=>{
+
+  uni.showToast({
+    title:"评价功能后续接入",
+    icon:"none"
+  })
+
+}
+
+
+const showMore=(item)=>{
+
+  uni.showActionSheet({
+
+    itemList:["查看详情","删除订单","联系客服"],
+
+    success:(res)=>{
+
+      if(res.tapIndex===0){
+        goOrderDetail(item)
       }
-    }
-  });
-};
 
-const contactService = () => {
-  uni.showModal({
-    title: "联系客服",
-    content: "是否拨打客服热线 400-xxxx-xxx ?",
-    success: (res) => {
-      if (res.confirm) {
-        uni.showToast({
-          title: "客服功能后续接入",
-          icon: "none"
-        });
+      if(res.tapIndex===1){
 
-        // 小程序可用：
-        // uni.makePhoneCall({ phoneNumber: "400xxxxxxx" })
+        const index=orderList.findIndex(
+          i=>i.id===item.id
+        )
+
+        if(index>-1){
+          orderList.splice(index,1)
+        }
+
       }
-    }
-  });
-};
 
-onShow(() => {
-  uni.$emit("updateTabBar");
-});
+      if(res.tapIndex===2){
+        contactService()
+      }
+
+    }
+
+  })
+
+}
+
+
+const contactService=()=>{
+
+  uni.showModal({
+
+    title:"联系客服",
+
+    content:"是否联系在线客服？",
+
+    success:(res)=>{
+
+      if(res.confirm){
+
+        uni.showToast({
+          title:"客服功能后续接入",
+          icon:"none"
+        })
+
+      }
+
+    }
+
+  })
+
+}
+
+
+onShow(()=>{
+  uni.$emit("updateTabBar")
+})
+
 </script>
 
 <style>

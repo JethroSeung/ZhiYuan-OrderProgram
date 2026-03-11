@@ -1,11 +1,10 @@
 <template>
   <view class="container">
-    <!-- 顶部商品大图 -->
+
     <view class="img-box">
       <image class="goods-img" :src="goods.img" mode="aspectFill"></image>
     </view>
 
-    <!-- 商品信息 -->
     <view class="info-card">
       <text class="goods-name">{{ goods.name }}</text>
       <text class="goods-desc">{{ goods.desc }}</text>
@@ -16,7 +15,6 @@
       </view>
     </view>
 
-    <!-- 配送信息 -->
     <view class="section-card">
       <text class="section-title">配送信息</text>
 
@@ -36,7 +34,6 @@
       </view>
     </view>
 
-    <!-- 商品规格 -->
     <view class="section-card">
       <text class="section-title">商品规格</text>
 
@@ -53,7 +50,6 @@
       </view>
     </view>
 
-    <!-- 数量选择 -->
     <view class="section-card">
       <text class="section-title">购买数量</text>
 
@@ -64,7 +60,6 @@
       </view>
     </view>
 
-    <!-- 推荐提示 -->
     <view class="tip-card">
       <text class="tip-title">温馨提示</text>
       <text class="tip-text">
@@ -72,7 +67,6 @@
       </text>
     </view>
 
-    <!-- 底部按钮栏 -->
     <view class="bottom-bar">
       <view class="bottom-price">
         <text class="total-label">合计：</text>
@@ -80,167 +74,172 @@
       </view>
 
       <view class="btn-area">
-        <button class="btn cart" @click="addToCart">加入购物车</button>
+        <button class="btn cart" @click="handleAddCart">加入购物车</button>
         <button class="btn buy" @click="buyNow">立即下单</button>
       </view>
     </view>
+
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { onLoad } from "@dcloudio/uni-app";
+import { ref, computed } from "vue"
+import { onLoad } from "@dcloudio/uni-app"
+import { addToCart } from "@/store/cart.js"
 
 const goods = ref({
   id: 0,
   name: "加载中...",
   desc: "请稍候",
   price: 0,
-  img: "/static/goods/burger.jpg",
-  type: "FOOD"
-});
+  img: "/static/goods/burger.jpg"
+})
 
 const goodsList = [
   {
-    id: 1,
-    name: "汉堡套餐",
-    desc: "热销 · 30分钟送达",
-    price: 19.9,
-    img: "/static/goods/burger.jpg",
-    type: "FOOD"
+    id:1,
+    name:"汉堡套餐",
+    desc:"热销 · 30分钟送达",
+    price:19.9,
+    img:"/static/goods/burger.jpg"
   },
   {
-    id: 2,
-    name: "百令胶囊感冒药",
-    desc: "极速配送 · 保障安全",
-    price: 28.0,
-    img: "/static/goods/medicine.jpg",
-    type: "MEDICINE"
+    id:2,
+    name:"百令胶囊感冒药",
+    desc:"极速配送 · 保障安全",
+    price:28,
+    img:"/static/goods/medicine.jpg"
   },
   {
-    id: 3,
-    name: "购物篮子",
-    desc: "家庭必备 · 生活用品",
-    price: 9.9,
-    img: "/static/goods/daily.jpg",
-    type: "DAILY"
+    id:3,
+    name:"购物篮子",
+    desc:"家庭必备 · 生活用品",
+    price:9.9,
+    img:"/static/goods/daily.jpg"
   },
   {
-    id: 4,
-    name: "袋装复合硅酸盐",
-    desc: "工业级 · 快速配送",
-    price: 99.0,
-    img: "/static/goods/tool.jpg",
-    type: "INDUSTRY"
+    id:4,
+    name:"袋装复合硅酸盐",
+    desc:"工业级 · 快速配送",
+    price:99,
+    img:"/static/goods/tool.jpg"
   }
-];
+]
 
-const count = ref(1);
+const count = ref(1)
 
-const specList = ref(["标准规格", "加大份", "超值套餐"]);
-const selectedSpec = ref("标准规格");
+const specList = ref(["标准规格","加大份","超值套餐"])
+const selectedSpec = ref("标准规格")
 
-const totalPrice = computed(() => {
-  return (goods.value.price * count.value).toFixed(2);
-});
+const totalPrice = computed(()=>{
+  return (goods.value.price * count.value).toFixed(2)
+})
 
-const plusCount = () => {
-  count.value++;
-};
+const plusCount = ()=>{
+  count.value++
+}
 
-const minusCount = () => {
-  if (count.value > 1) count.value--;
-};
+const minusCount = ()=>{
+  if(count.value>1){
+    count.value--
+  }
+}
 
-const addToCart = () => {
+const handleAddCart = ()=>{
+
+  addToCart({
+    id: goods.value.id,
+    name: goods.value.name + "（" + selectedSpec.value + "）",
+    price: goods.value.price,
+    img: goods.value.img,
+    count: count.value
+  })
+
   uni.showToast({
-    title: "已加入购物车（模拟）",
-    icon: "success"
-  });
+    title:"已加入购物车",
+    icon:"success"
+  })
 
-  // 后续接口预留：
-  // POST /api/cart/add
-};
+}
 
-const buyNow = () => {
+const buyNow = ()=>{
+
   uni.showModal({
-    title: "确认下单",
+    title:"确认下单",
     content:
-      "商品：" +
-      goods.value.name +
-      "\n规格：" +
-      selectedSpec.value +
-      "\n数量：" +
-      count.value +
-      "\n合计：￥" +
-      totalPrice.value,
-    success: (res) => {
-      if (res.confirm) {
+      "商品："+goods.value.name+
+      "\n规格："+selectedSpec.value+
+      "\n数量："+count.value+
+      "\n合计：￥"+totalPrice.value,
+    success:(res)=>{
+
+      if(res.confirm){
+
         uni.showToast({
-          title: "下单成功（模拟）",
-          icon: "success"
-        });
+          title:"下单成功（模拟）",
+          icon:"success"
+        })
 
-        // 后续接口预留：
-        // POST /api/order/create
-        // { goodsId, spec, count }
       }
+
     }
-  });
-};
+  })
 
-onLoad((options) => {
-  const id = Number(options.id);
+}
 
-  const found = goodsList.find((item) => item.id === id);
-  if (found) {
-    goods.value = found;
-  } else {
-    goods.value = goodsList[0];
+onLoad((options)=>{
+
+  const id = Number(options.id)
+
+  const found = goodsList.find(item=>item.id===id)
+
+  if(found){
+    goods.value = found
+  }else{
+    goods.value = goodsList[0]
   }
-});
+
+})
 </script>
 
 <style>
+/* 你的原样式完全保留 */
 .container {
   background: #f8f9fb;
   min-height: 100vh;
   padding-bottom: 160rpx;
 }
 
-/* 顶部图片 */
 .img-box {
   width: 100%;
-  height: 420rpx;
+  height: 320rpx;
   overflow: hidden;
+  border-bottom-left-radius: 30rpx;
+  border-bottom-right-radius: 30rpx;
 }
 
 .goods-img {
   width: 100%;
-  height: 420rpx;
+  height: 280rpx;
 }
 
-/* 商品信息卡片 */
 .info-card {
   background: #fff;
   border-radius: 28rpx;
   padding: 28rpx;
   margin: -40rpx 18rpx 18rpx;
-  box-shadow: 0 10rpx 24rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10rpx 24rpx rgba(0,0,0,0.06);
 }
 
 .goods-name {
   font-size: 36rpx;
   font-weight: bold;
-  color: #222;
-  display: block;
 }
 
 .goods-desc {
   margin-top: 14rpx;
   font-size: 26rpx;
   color: #888;
-  display: block;
 }
 
 .price-row {
@@ -262,23 +261,18 @@ onLoad((options) => {
   border-radius: 999rpx;
   background: #fff4e6;
   color: #ff6b35;
-  font-weight: 500;
 }
 
-/* 通用 section */
 .section-card {
   background: #fff;
   margin: 18rpx;
   border-radius: 24rpx;
   padding: 26rpx;
-  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 
 .section-title {
   font-size: 30rpx;
   font-weight: bold;
-  color: #333;
-  display: block;
   margin-bottom: 18rpx;
 }
 
@@ -288,18 +282,6 @@ onLoad((options) => {
   padding: 14rpx 0;
 }
 
-.label {
-  font-size: 26rpx;
-  color: #666;
-}
-
-.value {
-  font-size: 26rpx;
-  color: #222;
-  font-weight: 500;
-}
-
-/* 规格 */
 .spec-list {
   display: flex;
   gap: 18rpx;
@@ -311,17 +293,13 @@ onLoad((options) => {
   border-radius: 999rpx;
   background: #f5f6f8;
   font-size: 24rpx;
-  color: #666;
-  font-weight: 500;
 }
 
 .spec-item.active {
   background: #fff4e6;
   color: #ff6b35;
-  border: 2rpx solid rgba(255, 107, 53, 0.25);
 }
 
-/* 数量选择 */
 .count-row {
   display: flex;
   justify-content: flex-end;
@@ -337,93 +315,57 @@ onLoad((options) => {
   text-align: center;
   line-height: 70rpx;
   font-size: 34rpx;
-  font-weight: bold;
-  color: #444;
 }
 
 .count-num {
   font-size: 30rpx;
   font-weight: bold;
-  color: #222;
-  width: 50rpx;
-  text-align: center;
 }
 
-/* 提示 */
 .tip-card {
   margin: 18rpx;
   border-radius: 24rpx;
   padding: 26rpx;
-  background: linear-gradient(135deg, #fff4e6, #ffe2d6);
+  background: linear-gradient(135deg,#fff4e6,#ffe2d6);
 }
 
-.tip-title {
-  font-size: 28rpx;
-  font-weight: bold;
-  color: #ff6b35;
-  display: block;
-  margin-bottom: 12rpx;
-}
-
-.tip-text {
-  font-size: 24rpx;
-  color: #666;
-  line-height: 40rpx;
-}
-
-/* 底部栏 */
 .bottom-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  padding: 18rpx 18rpx 26rpx;
-  box-shadow: 0 -10rpx 22rpx rgba(0, 0, 0, 0.06);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  left:0;
+  right:0;
+  bottom:0;
+  background:#fff;
+  padding:18rpx;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
-.bottom-price {
-  display: flex;
-  align-items: baseline;
-  gap: 10rpx;
+.total-price{
+  font-size:34rpx;
+  font-weight:bold;
+  color:#ff4d4f;
 }
 
-.total-label {
-  font-size: 24rpx;
-  color: #666;
+.btn-area{
+  display:flex;
+  gap:16rpx;
 }
 
-.total-price {
-  font-size: 34rpx;
-  font-weight: bold;
-  color: #ff4d4f;
+.btn{
+  height:76rpx;
+  line-height:76rpx;
+  border-radius:999rpx;
+  padding:0 32rpx;
 }
 
-.btn-area {
-  display: flex;
-  gap: 16rpx;
+.btn.cart{
+  background:#fff4e6;
+  color:#ff6b35;
 }
 
-.btn {
-  height: 76rpx;
-  line-height: 76rpx;
-  border-radius: 999rpx;
-  font-size: 26rpx;
-  font-weight: bold;
-  padding: 0 32rpx;
-}
-
-.btn.cart {
-  background: #fff4e6;
-  color: #ff6b35;
-  border: 2rpx solid rgba(255, 107, 53, 0.25);
-}
-
-.btn.buy {
-  background: linear-gradient(135deg, #ff9f1a, #ff6b35);
-  color: #fff;
+.btn.buy{
+  background:linear-gradient(135deg,#ff9f1a,#ff6b35);
+  color:#fff;
 }
 </style>

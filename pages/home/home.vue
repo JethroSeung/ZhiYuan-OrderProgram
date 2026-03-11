@@ -52,108 +52,109 @@
       </view>
     </view>
   </view>
+  <!-- 浮动购物车 -->
+  <view class="floating-cart" @click="goCart">
+  
+    <image src="/static/icons/cart.png" class="cart-icon"></image>
+  
+    <view v-if="cartCount>0" class="cart-badge">
+      {{ cartCount }}
+    </view>
+  
+  </view>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { onShow } from "@dcloudio/uni-app";
+import { ref, computed } from "vue"
+import { onShow } from "@dcloudio/uni-app"
+import { cartStore, addToCart } from "@/store/cart.js"
 
-const locationText = ref("正在定位...");
+const locationText = ref("正在定位...")
+
+const cartCount = computed(()=>{
+  let total = 0
+  cartStore.list.forEach(i=>{
+    total += i.count
+  })
+  return total>99 ? "99+" : total
+})
+
+function goCart(){
+  if(cartStore.list.length===0){
+    uni.showToast({
+      title:"购物车还是空的",
+      icon:"none"
+    })
+    return
+  }
+
+  uni.navigateTo({
+    url:"/pages/cart/cart"
+  })
+}
 
 const categories = ref([
-  { name: "食品外卖", icon: "/static/category/food_new.png", type: "FOOD" },
-  { name: "药品急送", icon: "/static/category/medicine_new.png", type: "MEDICINE" },
-  { name: "生活用品", icon: "/static/category/daily_new.png", type: "DAILY" },
-  { name: "工业用品", icon: "/static/category/industry_new.png", type: "INDUSTRY" }
-]);
+  { name:"食品外卖", icon:"/static/category/food_new.png", type:"FOOD" },
+  { name:"药品急送", icon:"/static/category/medicine_new.png", type:"MEDICINE" },
+  { name:"生活用品", icon:"/static/category/daily_new.png", type:"DAILY" },
+  { name:"工业用品", icon:"/static/category/industry_new.png", type:"INDUSTRY" }
+])
 
 const goodsList = ref([
-  {
-    id: 1,
-    name: "汉堡套餐",
-    desc: "热销 · 30分钟送达",
-    price: 19.9,
-    img: "/static/goods/burger.jpg",
-    type: "FOOD"
-  },
-  {
-    id: 2,
-    name: "百令胶囊感冒药",
-    desc: "极速配送 · 保障安全",
-    price: 28.0,
-    img: "/static/goods/medicine.jpg",
-    type: "MEDICINE"
-  },
-  {
-    id: 3,
-    name: "购物篮子",
-    desc: "家庭必备 · 生活用品",
-    price: 9.9,
-    img: "/static/goods/daily.jpg",
-    type: "DAILY"
-  },
-  {
-    id: 4,
-    name: "袋装复合硅酸盐",
-    desc: "工业级 · 快速配送",
-    price: 99.0,
-    img: "/static/goods/tool.jpg",
-    type: "INDUSTRY"
-  }
-]);
+  {id:1,name:"汉堡套餐",desc:"热销 · 30分钟送达",price:19.9,img:"/static/goods/burger.jpg"},
+  {id:2,name:"百令胶囊感冒药",desc:"极速配送 · 保障安全",price:28,img:"/static/goods/medicine.jpg"},
+  {id:3,name:"购物篮子",desc:"家庭必备 · 生活用品",price:9.9,img:"/static/goods/daily.jpg"},
+  {id:4,name:"袋装复合硅酸盐",desc:"工业级 · 快速配送",price:99,img:"/static/goods/tool.jpg"}
+])
 
-const goSearch = () => {
-  uni.showToast({
-    title: "搜索功能后续接入",
-    icon: "none"
-  });
-};
+const goGoodsDetail = (item)=>{
 
-const goCategory = (item) => {
-  uni.showToast({
-    title: "进入分类：" + item.name,
-    icon: "none"
-  });
-};
-
-const goGoodsDetail = (item) => {
   uni.navigateTo({
-    url: "/pages/goods/detail?id=" + item.id
-  });
-};
+    url:"/pages/goods/detail?id="+item.id
+  })
 
+}
 
-const buyNow = (item) => {
-  uni.showModal({
-    title: "确认下单",
-    content: "是否下单购买：" + item.name + " ?",
-    success: (res) => {
-      if (res.confirm) {
-        uni.showToast({
-          title: "下单成功（模拟）",
-          icon: "success"
-        });
-      }
-    }
-  });
-};
+function goSearch(){
 
-const getLocation = () => {
+  uni.showToast({
+    title:"搜索功能开发中",
+    icon:"none"
+  })
+
+}
+
+const buyNow = (item)=>{
+
+  addToCart({
+    id:item.id,
+    name:item.name,
+    price:item.price,
+    img:item.img,
+    count:1
+  })
+
+  uni.showToast({
+    title:"已加入购物车",
+    icon:"success"
+  })
+}
+
+const getLocation=()=>{
   uni.getLocation({
-    type: "gcj02",
-    success: (res) => {
-      locationText.value = "已定位 (" + res.latitude.toFixed(2) + "," + res.longitude.toFixed(2) + ")";
+    type:"gcj02",
+    success:(res)=>{
+      locationText.value="已定位 ("+res.latitude.toFixed(2)+","+res.longitude.toFixed(2)+")"
     },
-    fail: () => {
-      locationText.value = "定位失败（请授权）";
+    fail:()=>{
+      locationText.value="南京邮电大学仙林校区东门"
     }
-  });
-};
+  })
+}
 
-onShow(() => {
-  uni.$emit("updateTabBar");
-  getLocation();
-});
+onShow(()=>{
+  getLocation()
+})
 </script>
 
 <style>
@@ -341,5 +342,43 @@ onShow(() => {
   font-size: 26rpx;
   font-weight: bold;
   border: 2rpx solid rgba(255, 107, 53, 0.25);
+}
+.floating-cart{
+  position: fixed;
+  right: 30rpx;
+  bottom: 120rpx;
+
+  width: 100rpx;
+  height: 100rpx;
+
+  background: #ffffff;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 8rpx 20rpx rgba(0,0,0,0.15);
+
+  z-index: 999;
+}
+
+.cart-icon{
+  width: 50rpx;
+  height: 50rpx;
+}
+
+.cart-badge{
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+
+  background: #ff4d4f;
+  color: white;
+
+  font-size: 22rpx;
+
+  padding: 4rpx 10rpx;
+  border-radius: 20rpx;
 }
 </style>
